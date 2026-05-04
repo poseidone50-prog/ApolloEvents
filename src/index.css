@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 222 47% 20%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 30 80% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 30 80% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 222 47% 20%;
+    --chart-1: 30 80% 55%;
+    --chart-2: 222 47% 20%;
+    --chart-3: 160 60% 45%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 0 84% 60%;
+    --radius: 0.75rem;
+    --sidebar-background: 222 47% 15%;
+    --sidebar-foreground: 220 14% 92%;
+    --sidebar-primary: 30 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 47% 22%;
+    --sidebar-accent-foreground: 220 14% 92%;
+    --sidebar-border: 222 30% 25%;
+    --sidebar-ring: 30 80% 55%;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 0 0% 98%;
+    --card: 222 47% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 222 47% 12%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 30 80% 55%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 222 47% 20%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 222 30% 18%;
+    --muted-foreground: 220 9% 60%;
+    --accent: 30 80% 55%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 222 30% 22%;
+    --input: 222 30% 22%;
+    --ring: 30 80% 55%;
+    --chart-1: 30 80% 55%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 222 47% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 222 47% 10%;
+    --sidebar-foreground: 220 14% 92%;
+    --sidebar-primary: 30 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 47% 15%;
+    --sidebar-accent-foreground: 220 14% 92%;
+    --sidebar-border: 222 30% 18%;
+    --sidebar-ring: 30 80% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans tracking-tight;
+  }
+}
+
+@media print {
+  @page { 
+    margin: 0; /* Rimuove header (Base 44 App) e footer del browser */
+  }
+  body { 
+    padding: 1.5cm; 
+    background-color: white !important;
+  }
+}
