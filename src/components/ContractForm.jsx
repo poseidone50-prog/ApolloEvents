@@ -150,19 +150,20 @@ export default function ContractForm() {
   // ======================
   if (preview) {
     return (
-      <div className="bg-white p-6 print:p-0 print:pt-16 print:pb-12 text-xs leading-snug text-slate-800 max-w-[21cm] mx-auto shadow-2xl rounded-sm print:shadow-none font-sans flex flex-col print:min-h-[29.7cm]">
+      <div className="bg-white p-6 print:p-0 text-xs leading-snug text-slate-800 max-w-[21cm] mx-auto shadow-2xl rounded-sm print:shadow-none font-sans flex flex-col">
+        <style>{"@media print { @page { margin: 0.8cm; } }"}</style>
         {/* Header */}
-        <div className="flex justify-between items-center mb-4 border-b-2 border-slate-900 pb-3">
+        <div className="flex justify-between items-center mb-3 border-b-2 border-slate-900 pb-2">
           <div className="flex items-center gap-4">
-            <img src={LOGO} alt="Apollo Events" className="h-16 w-16 object-contain drop-shadow-sm" />
+            <img src={LOGO} alt="Apollo Events" className="h-14 w-14 object-contain drop-shadow-sm" />
             <div className="tracking-tight">
               <h1 className="font-black text-2xl text-slate-900 uppercase">Apollo Events</h1>
-              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mt-0.5">Spettacoli &amp; Eventi</p>
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Spettacoli &amp; Eventi</p>
             </div>
           </div>
           <div className="text-right">
-            <h2 className="font-black text-xl text-slate-900 tracking-wider mb-1">CONTRATTO</h2>
-            <div className="text-xs text-slate-600 bg-slate-50 p-1.5 px-2 rounded border border-slate-200 inline-block text-left">
+            <h2 className="font-black text-xl text-slate-900 tracking-wider">CONTRATTO</h2>
+            <div className="text-xs text-slate-600 bg-slate-50 p-1 px-2 rounded border border-slate-200 inline-block text-left mt-1">
               <p><span className="font-semibold text-slate-400 uppercase text-[10px] w-12 inline-block">Rif. N°:</span> <span className="font-bold text-slate-800">{contractNumber || "—"}</span></p>
               <p><span className="font-semibold text-slate-400 uppercase text-[10px] w-12 inline-block">Data:</span> <span className="font-bold text-slate-800">{contractDate ? format(new Date(contractDate), "dd/MM/yyyy", { locale: it }) : "—"}</span></p>
             </div>
@@ -170,20 +171,20 @@ export default function ContractForm() {
         </div>
 
         {/* Customer & Event Details */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-slate-50 p-3 rounded-md border border-slate-200/60 shadow-sm relative overflow-hidden">
+        <div className="grid grid-cols-2 gap-4 mb-3">
+          <div className="bg-slate-50 p-2.5 rounded-md border border-slate-200/60 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-slate-900"></div>
-            <h3 className="font-bold text-[9px] uppercase tracking-widest text-slate-400 mb-1.5">Dati Committente</h3>
+            <h3 className="font-bold text-[9px] uppercase tracking-widest text-slate-400 mb-1">Dati Committente</h3>
             <p className="font-black text-base text-slate-800 leading-tight">{customer.name}</p>
             {customer.address && <p className="mt-0.5 text-slate-600">{customer.address}</p>}
-            <div className="mt-1.5 space-y-0.5 text-[11px] text-slate-600">
+            <div className="mt-1 space-y-0.5 text-[11px] text-slate-600">
               {customer.phone && <p><span className="font-semibold text-slate-400">Tel:</span> {customer.phone}</p>}
               {customer.email && <p><span className="font-semibold text-slate-400">Email:</span> {customer.email}</p>}
             </div>
           </div>
-          <div className="bg-slate-50 p-3 rounded-md border border-slate-200/60 shadow-sm relative overflow-hidden">
+          <div className="bg-slate-50 p-2.5 rounded-md border border-slate-200/60 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-slate-900"></div>
-            <h3 className="font-bold text-[9px] uppercase tracking-widest text-slate-400 mb-1.5">Dettagli Evento</h3>
+            <h3 className="font-bold text-[9px] uppercase tracking-widest text-slate-400 mb-1">Dettagli Evento</h3>
             <div className="space-y-1 text-[11px] text-slate-700">
               {eventLocation && <p className="flex justify-between border-b border-slate-200 pb-0.5"><span className="font-semibold text-slate-500">Luogo:</span> <span className="font-bold text-right">{eventLocation}</span></p>}
               {eventDate && <p className="flex justify-between border-b border-slate-200 pb-0.5"><span className="font-semibold text-slate-500">Data Evento:</span> <span className="font-bold">{format(new Date(eventDate), "dd/MM/yyyy", { locale: it })}</span></p>}
@@ -193,23 +194,23 @@ export default function ContractForm() {
         </div>
 
         {/* Items Table */}
-        <div className="mb-4 rounded-md overflow-hidden border border-slate-300 shadow-sm">
+        <div className="mb-3 rounded-md overflow-hidden border border-slate-300 shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-900 text-white text-[10px] uppercase tracking-wider">
-                <th className="py-2 px-3 font-semibold">Descrizione Servizio / Articolo</th>
-                <th className="py-2 px-3 font-semibold text-center w-16">Q.tà</th>
-                <th className="py-2 px-3 font-semibold text-right w-24">Prezzo Unit.</th>
-                <th className="py-2 px-3 font-semibold text-right w-28">Importo</th>
+                <th className="py-1.5 px-3 font-semibold">Descrizione Servizio / Articolo</th>
+                <th className="py-1.5 px-3 font-semibold text-center w-16">Q.tà</th>
+                <th className="py-1.5 px-3 font-semibold text-right w-24">Prezzo Unit.</th>
+                <th className="py-1.5 px-3 font-semibold text-right w-28">Importo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
               {items.filter(i => i.description).map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-1.5 px-3 text-[11px] font-medium text-slate-800">{item.description}</td>
-                  <td className="py-1.5 px-3 text-[11px] text-center text-slate-600">{item.quantity}</td>
-                  <td className="py-1.5 px-3 text-[11px] text-right text-slate-600">€ {parseFloat(item.unit_price).toFixed(2)}</td>
-                  <td className="py-1.5 px-3 text-[11px] text-right font-bold text-slate-900">€ {(item.quantity * item.unit_price).toFixed(2)}</td>
+                  <td className="py-1 px-3 text-[11px] font-medium text-slate-800">{item.description}</td>
+                  <td className="py-1 px-3 text-[11px] text-center text-slate-600">{item.quantity}</td>
+                  <td className="py-1 px-3 text-[11px] text-right text-slate-600">€ {parseFloat(item.unit_price).toFixed(2)}</td>
+                  <td className="py-1 px-3 text-[11px] text-right font-bold text-slate-900">€ {(item.quantity * item.unit_price).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -217,7 +218,7 @@ export default function ContractForm() {
         </div>
 
         {/* Subtotals & Discount */}
-        <div className="flex flex-col items-end space-y-1 mb-4 pr-3">
+        <div className="flex flex-col items-end space-y-1 mb-3 pr-3">
           {discount > 0 && (
             <>
               <div className="flex justify-between w-56 text-[11px]"><span className="text-slate-500">Totale Servizi:</span><span className="font-semibold">€ {itemsTotal.toFixed(2)}</span></div>
@@ -232,19 +233,19 @@ export default function ContractForm() {
 
         {/* Deposits History */}
         {(deposits.length > 0) && (
-          <div className="mb-4">
-            <h3 className="font-bold text-[9px] uppercase tracking-widest text-emerald-600 mb-1.5">Riepilogo Acconti Ricevuti</h3>
-            <div className="border border-emerald-200 rounded-md bg-emerald-50/50 p-3 shadow-sm relative overflow-hidden">
+          <div className="mb-3 break-inside-avoid">
+            <h3 className="font-bold text-[9px] uppercase tracking-widest text-emerald-600 mb-1">Riepilogo Acconti Ricevuti</h3>
+            <div className="border border-emerald-200 rounded-md bg-emerald-50/50 p-2 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-              <ul className="space-y-1">
+              <ul className="space-y-0.5">
                 {deposits.map((dep, idx) => (
-                  <li key={idx} className="flex justify-between text-[11px] border-b border-emerald-200/50 pb-1 last:border-0 last:pb-0">
+                  <li key={idx} className="flex justify-between text-[11px] border-b border-emerald-200/50 pb-0.5 last:border-0 last:pb-0">
                     <span className="text-slate-600">Acconto versato in data {dep.date ? format(new Date(dep.date), "dd/MM/yyyy", { locale: it }) : "—"}</span>
                     <span className="font-bold text-emerald-700">€ {parseFloat(dep.amount).toFixed(2)}</span>
                   </li>
                 ))}
               </ul>
-              <div className="flex justify-between text-[11px] pt-1.5 mt-1.5 border-t border-emerald-300 font-bold uppercase tracking-wide">
+              <div className="flex justify-between text-[11px] pt-1 mt-1 border-t border-emerald-300 font-bold uppercase tracking-wide">
                 <span className="text-emerald-800">Totale Versato</span>
                 <span className="text-emerald-700 text-sm">€ {paidTotal.toFixed(2)}</span>
               </div>
@@ -253,37 +254,37 @@ export default function ContractForm() {
         )}
 
         {notes && (
-          <div className="border-l-4 border-slate-300 pl-3 py-1 mb-4 text-[11px] text-slate-600">
+          <div className="border-l-4 border-slate-300 pl-3 py-1 mb-3 text-[11px] text-slate-600 break-inside-avoid">
              <p className="font-bold mb-0.5 text-slate-800 uppercase tracking-wider text-[9px]">Note Aggiuntive / Accordi Specifici</p>
              <p className="whitespace-pre-line leading-relaxed">{notes}</p>
           </div>
         )}
 
         {/* Balance */}
-        <div className="flex justify-between items-center p-3 px-4 bg-slate-900 text-white rounded-md shadow-lg mb-6 relative overflow-hidden">
+        <div className="flex justify-between items-center p-3 px-4 bg-slate-900 text-white rounded-md shadow-lg mb-4 relative overflow-hidden break-inside-avoid">
            <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-400"></div>
            <span className="font-bold text-xs uppercase tracking-widest text-slate-300 ml-1.5">Saldo Rimanente da Versare</span>
            <span className="font-black text-xl tracking-tight">€ {balance.toFixed(2)}</span>
         </div>
 
-        {/* Signatures */}
-        <div className="grid grid-cols-2 gap-16 mt-auto mb-8 pt-6">
-          <div className="text-center">
-            <div className="border-b border-slate-400 h-10 mb-1.5"></div>
-            <p className="font-bold text-[9px] uppercase tracking-widest text-slate-500">Firma Cliente per Accettazione</p>
+        {/* Signatures & Conditions (Grouped to avoid page breaks) */}
+        <div className="mt-8 break-inside-avoid">
+          {/* Signatures */}
+          <div className="grid grid-cols-2 gap-16 mb-4">
+            <div className="text-center">
+              <div className="border-b border-slate-400 h-10 mb-1.5"></div>
+              <p className="font-bold text-[9px] uppercase tracking-widest text-slate-500">Firma Cliente per Accettazione</p>
+            </div>
+            <div className="text-center">
+              <div className="border-b border-slate-400 h-10 mb-1.5"></div>
+              <p className="font-bold text-[9px] uppercase tracking-widest text-slate-500">Per Apollo Events</p>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="border-b border-slate-400 h-10 mb-1.5"></div>
-            <p className="font-bold text-[9px] uppercase tracking-widest text-slate-500">Per Apollo Events</p>
-          </div>
-        </div>
 
-        {/* Condizioni Generali (Pushed to bottom) */}
-        <div className="border-t border-slate-300 pt-3 text-[9px] text-slate-500 mt-2">
-          <p className="font-bold mb-1 uppercase tracking-widest text-slate-700">Condizioni Generali di Pagamento</p>
-          <div className="grid grid-cols-1 gap-1 text-justify leading-tight">
-            <p><strong>Caparra Confirmatoria:</strong> A conferma della stipula del contratto, è richiesto un versamento non rimborsabile di almeno € 100,00. In caso di recesso, la somma sarà trattenuta (art. 1385 c.c.).</p>
-            <p><strong>Acconto:</strong> Entro e non oltre tre (3) mesi prima della data fissata per l'evento, è richiesto un acconto pari al 50% dell'importo totale pattuito.</p>
+          {/* Condizioni Generali */}
+          <div className="border-t border-slate-300 pt-2 text-[9px] text-slate-500 text-justify leading-tight">
+            <p className="font-bold mb-1 uppercase tracking-widest text-slate-700">Condizioni Generali di Pagamento</p>
+            <p className="mb-0.5"><strong>Caparra Confirmatoria:</strong> A conferma della stipula, è richiesto un versamento non rimborsabile di almeno € 100,00. In caso di recesso, la somma sarà trattenuta (art. 1385 c.c.). <strong>Acconto:</strong> Entro 3 mesi prima dell'evento, è richiesto un acconto del 50% dell'importo totale.</p>
             <p><strong>Modalità di Saldo:</strong> Versamento anticipato dell'intera somma residua entro 5 giorni dalla data dell'evento. In caso di saldo il giorno stesso dell'evento, è richiesto un ulteriore anticipo del 50% della rimanenza entro 5 giorni prima, corrispondendo la parte finale il giorno dell'evento.</p>
           </div>
         </div>
