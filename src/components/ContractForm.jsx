@@ -150,66 +150,66 @@ export default function ContractForm() {
   // ======================
   if (preview) {
     return (
-      <div className="bg-white p-8 print:p-0 text-[13px] leading-relaxed text-slate-800 max-w-[21cm] mx-auto shadow-2xl rounded-sm print:shadow-none font-sans">
+      <div className="bg-white p-6 print:p-0 print:pt-16 print:pb-12 text-xs leading-snug text-slate-800 max-w-[21cm] mx-auto shadow-2xl rounded-sm print:shadow-none font-sans flex flex-col print:min-h-[29.7cm]">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8 border-b-2 border-slate-900 pb-6">
-          <div className="flex items-center gap-5">
-            <img src={LOGO} alt="Apollo Events" className="h-24 w-24 object-contain drop-shadow-sm" />
+        <div className="flex justify-between items-center mb-4 border-b-2 border-slate-900 pb-3">
+          <div className="flex items-center gap-4">
+            <img src={LOGO} alt="Apollo Events" className="h-16 w-16 object-contain drop-shadow-sm" />
             <div className="tracking-tight">
-              <h1 className="font-black text-3xl text-slate-900 uppercase">Apollo Events</h1>
-              <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest mt-1">Spettacoli &amp; Eventi</p>
+              <h1 className="font-black text-2xl text-slate-900 uppercase">Apollo Events</h1>
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mt-0.5">Spettacoli &amp; Eventi</p>
             </div>
           </div>
           <div className="text-right">
-            <h2 className="font-black text-2xl text-slate-900 tracking-wider mb-2">CONTRATTO</h2>
-            <div className="text-sm text-slate-600 bg-slate-50 p-2 px-3 rounded border border-slate-200 inline-block text-left">
-              <p><span className="font-semibold text-slate-400 uppercase text-xs w-16 inline-block">Rif. N°:</span> <span className="font-bold text-slate-800">{contractNumber || "—"}</span></p>
-              <p><span className="font-semibold text-slate-400 uppercase text-xs w-16 inline-block">Data:</span> <span className="font-bold text-slate-800">{contractDate ? format(new Date(contractDate), "dd/MM/yyyy", { locale: it }) : "—"}</span></p>
+            <h2 className="font-black text-xl text-slate-900 tracking-wider mb-1">CONTRATTO</h2>
+            <div className="text-xs text-slate-600 bg-slate-50 p-1.5 px-2 rounded border border-slate-200 inline-block text-left">
+              <p><span className="font-semibold text-slate-400 uppercase text-[10px] w-12 inline-block">Rif. N°:</span> <span className="font-bold text-slate-800">{contractNumber || "—"}</span></p>
+              <p><span className="font-semibold text-slate-400 uppercase text-[10px] w-12 inline-block">Data:</span> <span className="font-bold text-slate-800">{contractDate ? format(new Date(contractDate), "dd/MM/yyyy", { locale: it }) : "—"}</span></p>
             </div>
           </div>
         </div>
 
         {/* Customer & Event Details */}
-        <div className="grid grid-cols-2 gap-8 mb-8">
-          <div className="bg-slate-50 p-5 rounded-lg border border-slate-200/60 shadow-sm relative overflow-hidden">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="bg-slate-50 p-3 rounded-md border border-slate-200/60 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-slate-900"></div>
-            <h3 className="font-bold text-[10px] uppercase tracking-widest text-slate-400 mb-3">Dati Committente</h3>
-            <p className="font-black text-lg text-slate-800 leading-tight">{customer.name}</p>
-            {customer.address && <p className="mt-1 text-slate-600">{customer.address}</p>}
-            <div className="mt-3 space-y-1 text-sm text-slate-600">
+            <h3 className="font-bold text-[9px] uppercase tracking-widest text-slate-400 mb-1.5">Dati Committente</h3>
+            <p className="font-black text-base text-slate-800 leading-tight">{customer.name}</p>
+            {customer.address && <p className="mt-0.5 text-slate-600">{customer.address}</p>}
+            <div className="mt-1.5 space-y-0.5 text-[11px] text-slate-600">
               {customer.phone && <p><span className="font-semibold text-slate-400">Tel:</span> {customer.phone}</p>}
               {customer.email && <p><span className="font-semibold text-slate-400">Email:</span> {customer.email}</p>}
             </div>
           </div>
-          <div className="bg-slate-50 p-5 rounded-lg border border-slate-200/60 shadow-sm relative overflow-hidden">
+          <div className="bg-slate-50 p-3 rounded-md border border-slate-200/60 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-slate-900"></div>
-            <h3 className="font-bold text-[10px] uppercase tracking-widest text-slate-400 mb-3">Dettagli Evento</h3>
-            <div className="space-y-2 text-sm text-slate-700">
-              {eventLocation && <p className="flex justify-between border-b border-slate-200 pb-1"><span className="font-semibold text-slate-500">Luogo:</span> <span className="font-bold text-right">{eventLocation}</span></p>}
-              {eventDate && <p className="flex justify-between border-b border-slate-200 pb-1"><span className="font-semibold text-slate-500">Data Evento:</span> <span className="font-bold">{format(new Date(eventDate), "dd/MM/yyyy", { locale: it })}</span></p>}
-              {eventTime && <p className="flex justify-between border-b border-slate-200 pb-1"><span className="font-semibold text-slate-500">Orario:</span> <span className="font-bold">{eventTime}</span></p>}
+            <h3 className="font-bold text-[9px] uppercase tracking-widest text-slate-400 mb-1.5">Dettagli Evento</h3>
+            <div className="space-y-1 text-[11px] text-slate-700">
+              {eventLocation && <p className="flex justify-between border-b border-slate-200 pb-0.5"><span className="font-semibold text-slate-500">Luogo:</span> <span className="font-bold text-right">{eventLocation}</span></p>}
+              {eventDate && <p className="flex justify-between border-b border-slate-200 pb-0.5"><span className="font-semibold text-slate-500">Data Evento:</span> <span className="font-bold">{format(new Date(eventDate), "dd/MM/yyyy", { locale: it })}</span></p>}
+              {eventTime && <p className="flex justify-between border-b border-slate-200 pb-0.5"><span className="font-semibold text-slate-500">Orario:</span> <span className="font-bold">{eventTime}</span></p>}
             </div>
           </div>
         </div>
 
         {/* Items Table */}
-        <div className="mb-6 rounded-lg overflow-hidden border border-slate-300 shadow-sm">
+        <div className="mb-4 rounded-md overflow-hidden border border-slate-300 shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
-                <th className="py-3 px-4 font-semibold">Descrizione Servizio / Articolo</th>
-                <th className="py-3 px-4 font-semibold text-center w-20">Q.tà</th>
-                <th className="py-3 px-4 font-semibold text-right w-32">Prezzo Unit.</th>
-                <th className="py-3 px-4 font-semibold text-right w-32">Importo</th>
+              <tr className="bg-slate-900 text-white text-[10px] uppercase tracking-wider">
+                <th className="py-2 px-3 font-semibold">Descrizione Servizio / Articolo</th>
+                <th className="py-2 px-3 font-semibold text-center w-16">Q.tà</th>
+                <th className="py-2 px-3 font-semibold text-right w-24">Prezzo Unit.</th>
+                <th className="py-2 px-3 font-semibold text-right w-28">Importo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
               {items.filter(i => i.description).map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-3 px-4 text-sm font-medium text-slate-800">{item.description}</td>
-                  <td className="py-3 px-4 text-sm text-center text-slate-600">{item.quantity}</td>
-                  <td className="py-3 px-4 text-sm text-right text-slate-600">€ {parseFloat(item.unit_price).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-sm text-right font-bold text-slate-900">€ {(item.quantity * item.unit_price).toFixed(2)}</td>
+                  <td className="py-1.5 px-3 text-[11px] font-medium text-slate-800">{item.description}</td>
+                  <td className="py-1.5 px-3 text-[11px] text-center text-slate-600">{item.quantity}</td>
+                  <td className="py-1.5 px-3 text-[11px] text-right text-slate-600">€ {parseFloat(item.unit_price).toFixed(2)}</td>
+                  <td className="py-1.5 px-3 text-[11px] text-right font-bold text-slate-900">€ {(item.quantity * item.unit_price).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -217,14 +217,14 @@ export default function ContractForm() {
         </div>
 
         {/* Subtotals & Discount */}
-        <div className="flex flex-col items-end space-y-2 mb-8 pr-4">
+        <div className="flex flex-col items-end space-y-1 mb-4 pr-3">
           {discount > 0 && (
             <>
-              <div className="flex justify-between w-64 text-sm"><span className="text-slate-500">Totale Servizi:</span><span className="font-semibold">€ {itemsTotal.toFixed(2)}</span></div>
-              <div className="flex justify-between w-64 text-sm text-rose-600"><span className="font-semibold">Sconto Applicato:</span><span className="font-bold">- € {parseFloat(discount).toFixed(2)}</span></div>
+              <div className="flex justify-between w-56 text-[11px]"><span className="text-slate-500">Totale Servizi:</span><span className="font-semibold">€ {itemsTotal.toFixed(2)}</span></div>
+              <div className="flex justify-between w-56 text-[11px] text-rose-600"><span className="font-semibold">Sconto Applicato:</span><span className="font-bold">- € {parseFloat(discount).toFixed(2)}</span></div>
             </>
           )}
-          <div className="flex justify-between w-72 text-lg border-t-2 border-slate-900 pt-2 mt-2">
+          <div className="flex justify-between w-64 text-base border-t-2 border-slate-900 pt-1 mt-1">
             <span className="font-black uppercase text-slate-800">Totale Pattuito</span>
             <span className="font-black text-slate-900">€ {finalTotal.toFixed(2)}</span>
           </div>
@@ -232,69 +232,64 @@ export default function ContractForm() {
 
         {/* Deposits History */}
         {(deposits.length > 0) && (
-          <div className="mb-8">
-            <h3 className="font-bold text-[10px] uppercase tracking-widest text-emerald-600 mb-2">Riepilogo Acconti Ricevuti</h3>
-            <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 p-4 shadow-sm relative overflow-hidden">
+          <div className="mb-4">
+            <h3 className="font-bold text-[9px] uppercase tracking-widest text-emerald-600 mb-1.5">Riepilogo Acconti Ricevuti</h3>
+            <div className="border border-emerald-200 rounded-md bg-emerald-50/50 p-3 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 {deposits.map((dep, idx) => (
-                  <li key={idx} className="flex justify-between text-sm border-b border-emerald-200/50 pb-2 last:border-0 last:pb-0">
+                  <li key={idx} className="flex justify-between text-[11px] border-b border-emerald-200/50 pb-1 last:border-0 last:pb-0">
                     <span className="text-slate-600">Acconto versato in data {dep.date ? format(new Date(dep.date), "dd/MM/yyyy", { locale: it }) : "—"}</span>
                     <span className="font-bold text-emerald-700">€ {parseFloat(dep.amount).toFixed(2)}</span>
                   </li>
                 ))}
               </ul>
-              <div className="flex justify-between text-sm pt-3 mt-2 border-t border-emerald-300 font-bold uppercase tracking-wide">
+              <div className="flex justify-between text-[11px] pt-1.5 mt-1.5 border-t border-emerald-300 font-bold uppercase tracking-wide">
                 <span className="text-emerald-800">Totale Versato</span>
-                <span className="text-emerald-700 text-base">€ {paidTotal.toFixed(2)}</span>
+                <span className="text-emerald-700 text-sm">€ {paidTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* Balance */}
-        <div className="flex justify-between items-center p-5 bg-slate-900 text-white rounded-xl shadow-lg mb-8 relative overflow-hidden">
-           <div className="absolute top-0 left-0 w-2 h-full bg-amber-400"></div>
-           <span className="font-bold text-sm uppercase tracking-widest text-slate-300 ml-2">Saldo Rimanente da Versare</span>
-           <span className="font-black text-3xl tracking-tight">€ {balance.toFixed(2)}</span>
-        </div>
-
-        {/* Condizioni Generali */}
-        <div className="border border-slate-200 rounded-lg p-5 mb-8 text-xs text-slate-600 bg-slate-50/50">
-          <p className="font-bold mb-3 uppercase text-[10px] tracking-widest text-slate-800">Condizioni Generali di Pagamento</p>
-          <ul className="list-disc pl-5 space-y-2 text-justify leading-relaxed">
-            <li><strong>Caparra Confirmatoria:</strong> A conferma e validazione della stipula del presente contratto, è richiesto il versamento di una caparra confirmatoria non rimborsabile di almeno € 100,00. In caso di recesso da parte del Cliente, tale somma sarà trattenuta ai sensi dell'art. 1385 c.c.</li>
-            <li><strong>Acconto:</strong> Entro e non oltre tre (3) mesi prima della data fissata per l'evento, il Cliente è tenuto a versare un acconto pari al 50% dell'importo totale pattuito.</li>
-            <li><strong>Modalità di Saldo:</strong> Il saldo dell'importo rimanente dovrà avvenire secondo una delle seguenti modalità:
-              <ul className="list-[circle] pl-5 mt-2 space-y-1">
-                <li>Versamento anticipato dell'intera somma residua entro 5 giorni dalla data dell'evento.</li>
-                <li>In caso si desideri saldare il giorno stesso dell'evento, sarà necessario versare un anticipo pari al 50% della rimanenza residua entro 5 giorni prima dell'evento, corrispondendo la parte finale il giorno stesso dell'evento.</li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-
         {notes && (
-          <div className="border-l-4 border-slate-300 pl-4 py-2 mb-10 text-xs text-slate-600">
-             <p className="font-bold mb-1 text-slate-800 uppercase tracking-wider text-[10px]">Note Aggiuntive / Accordi Specifici</p>
+          <div className="border-l-4 border-slate-300 pl-3 py-1 mb-4 text-[11px] text-slate-600">
+             <p className="font-bold mb-0.5 text-slate-800 uppercase tracking-wider text-[9px]">Note Aggiuntive / Accordi Specifici</p>
              <p className="whitespace-pre-line leading-relaxed">{notes}</p>
           </div>
         )}
 
+        {/* Balance */}
+        <div className="flex justify-between items-center p-3 px-4 bg-slate-900 text-white rounded-md shadow-lg mb-6 relative overflow-hidden">
+           <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-400"></div>
+           <span className="font-bold text-xs uppercase tracking-widest text-slate-300 ml-1.5">Saldo Rimanente da Versare</span>
+           <span className="font-black text-xl tracking-tight">€ {balance.toFixed(2)}</span>
+        </div>
+
         {/* Signatures */}
-        <div className="grid grid-cols-2 gap-16 mt-12 pt-8">
+        <div className="grid grid-cols-2 gap-16 mt-auto mb-8 pt-6">
           <div className="text-center">
-            <div className="border-b border-slate-400 h-16 mb-2"></div>
-            <p className="font-bold text-[10px] uppercase tracking-widest text-slate-500">Firma Cliente per Accettazione</p>
+            <div className="border-b border-slate-400 h-10 mb-1.5"></div>
+            <p className="font-bold text-[9px] uppercase tracking-widest text-slate-500">Firma Cliente per Accettazione</p>
           </div>
           <div className="text-center">
-            <div className="border-b border-slate-400 h-16 mb-2"></div>
-            <p className="font-bold text-[10px] uppercase tracking-widest text-slate-500">Per Apollo Events</p>
+            <div className="border-b border-slate-400 h-10 mb-1.5"></div>
+            <p className="font-bold text-[9px] uppercase tracking-widest text-slate-500">Per Apollo Events</p>
+          </div>
+        </div>
+
+        {/* Condizioni Generali (Pushed to bottom) */}
+        <div className="border-t border-slate-300 pt-3 text-[9px] text-slate-500 mt-2">
+          <p className="font-bold mb-1 uppercase tracking-widest text-slate-700">Condizioni Generali di Pagamento</p>
+          <div className="grid grid-cols-1 gap-1 text-justify leading-tight">
+            <p><strong>Caparra Confirmatoria:</strong> A conferma della stipula del contratto, è richiesto un versamento non rimborsabile di almeno € 100,00. In caso di recesso, la somma sarà trattenuta (art. 1385 c.c.).</p>
+            <p><strong>Acconto:</strong> Entro e non oltre tre (3) mesi prima della data fissata per l'evento, è richiesto un acconto pari al 50% dell'importo totale pattuito.</p>
+            <p><strong>Modalità di Saldo:</strong> Versamento anticipato dell'intera somma residua entro 5 giorni dalla data dell'evento. In caso di saldo il giorno stesso dell'evento, è richiesto un ulteriore anticipo del 50% della rimanenza entro 5 giorni prima, corrispondendo la parte finale il giorno dell'evento.</p>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 mt-12 print:hidden flex-wrap justify-center border-t border-slate-200 pt-6">
+        <div className="flex gap-3 mt-8 print:hidden flex-wrap justify-center border-t border-slate-200 pt-4">
           <Button variant="outline" onClick={() => setPreview(false)} className="rounded-full px-6 shadow-sm border-slate-300 text-slate-700">← Torna alla Modifica</Button>
           <Button onClick={handleSave} disabled={saving} className="rounded-full px-8 bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-md">
             <Save className="w-4 h-4 mr-2" />{saving ? "Salvataggio..." : "Salva Definitivo"}
