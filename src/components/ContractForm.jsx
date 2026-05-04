@@ -245,7 +245,22 @@ export default function ContractForm() {
            <span>€{balance.toFixed(2)}</span>
         </div>
 
-        {notes && <div className="border rounded-xl p-3 mb-6 mt-6 text-xs text-muted-foreground"><p className="font-semibold mb-1">Note / Condizioni:</p><p className="whitespace-pre-line">{notes}</p></div>}
+        {/* Condizioni Generali */}
+        <div className="border rounded-xl p-4 mb-6 mt-6 text-xs text-muted-foreground bg-muted/10">
+          <p className="font-bold mb-2 uppercase text-[11px] text-foreground">Condizioni Generali di Pagamento</p>
+          <ul className="list-disc pl-4 space-y-1.5 text-justify">
+            <li><strong>Caparra Confirmatoria:</strong> A conferma e validazione della stipula del presente contratto, è richiesto il versamento di una caparra confirmatoria non rimborsabile di almeno € 100,00. In caso di recesso da parte del Cliente, tale somma sarà trattenuta ai sensi dell'art. 1385 c.c.</li>
+            <li><strong>Acconto:</strong> Entro e non oltre tre (3) mesi prima della data fissata per l'evento, il Cliente è tenuto a versare un acconto pari al 50% dell'importo totale pattuito.</li>
+            <li><strong>Modalità di Saldo:</strong> Il saldo dell'importo rimanente dovrà avvenire secondo una delle seguenti modalità:
+              <ul className="list-[circle] pl-4 mt-1 space-y-0.5">
+                <li>Versamento anticipato dell'intera somma residua entro 5 giorni dalla data dell'evento.</li>
+                <li>In caso si desideri saldare il giorno stesso dell'evento, sarà necessario versare un anticipo pari al 50% della rimanenza residua entro 5 giorni prima dell'evento, corrispondendo la parte finale il giorno stesso dell'evento.</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        {notes && <div className="border rounded-xl p-3 mb-6 text-xs text-muted-foreground"><p className="font-semibold mb-1 text-foreground">Note Aggiuntive / Accordi Specifici:</p><p className="whitespace-pre-line">{notes}</p></div>}
 
         {/* Signatures */}
         <div className="grid grid-cols-2 gap-8 mt-[5cm]">
