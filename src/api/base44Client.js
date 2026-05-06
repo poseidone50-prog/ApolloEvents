@@ -121,6 +121,25 @@ const makeFirestoreDB = (collectionName) => {
           showPermissionError(err);
           return fallback.filter(criteria, sortBy, limitTo);
         }
+        if (err.code === 'failed-precondition') {
+          try {
+            let qList = query(colRef);
+            if (sortBy) {
+              const orderField = sortBy.startsWith("-") ? sortBy.substring(1) : sortBy;
+              const asc = !sortBy.startsWith("-");
+              qList = query(qList, orderBy(orderField, asc ? "asc" : "desc"));
+            }
+            const snapList = await getDocs(qList);
+            let data = snapList.docs.map(extractFirestoreData);
+            for (const [key, value] of Object.entries(criteria)) {
+              data = data.filter(item => item[key] === value);
+            }
+            return limitTo ? data.slice(0, limitTo) : data;
+          } catch (fallbackErr) {
+            console.error("Local filter fallback failed:", fallbackErr);
+            return [];
+          }
+        }
         showPermissionError(err);
         return [];
       }
