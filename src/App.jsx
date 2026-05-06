@@ -14,6 +14,7 @@ import History from './pages/History';
 import PurchaseInvoice from './pages/PurchaseInvoice';
 import Documents from './pages/Documents';
 import Login from './pages/Login';
+import Settings from './pages/Settings';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -49,6 +50,7 @@ const AuthenticatedApp = () => {
         <Route path="/history" element={<History />} />
         <Route path="/purchase-invoice" element={<PurchaseInvoice />} />
         <Route path="/documents" element={<Documents />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

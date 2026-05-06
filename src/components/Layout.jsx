@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Home, Package, Users, ShoppingCart, History, Menu, X, Flame, FileText, LogOut } from "lucide-react";
+import { Home, Package, Users, ShoppingCart, History, Menu, X, Flame, FileText, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/AuthContext";
@@ -11,6 +11,7 @@ const navItems = [
   { path: "/pos", label: "Vendita", icon: ShoppingCart },
   { path: "/documents", label: "Documenti", icon: FileText },
   { path: "/history", label: "Storico", icon: History },
+  { path: "/settings", label: "Impostazioni", icon: Settings },
 ];
 
 // Bottom nav shows only the most-used 5
