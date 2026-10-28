@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Search, UserPlus, X, Check } from "lucide-react";
 import { toast } from "sonner";
 
-// customer = { name, address, city, phone, email, vat, fiscal }
+// customer = { name, address, city, phone, email, vat, fiscal, sdi, destination }
 // onChange(customer) called when customer fields change
 export default function CustomerPicker({ customer, onChange }) {
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNewForm, setShowNewForm] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({ name: "", address: "", city: "", phone: "", email: "", vat: "", fiscal: "" });
+  const [newCustomer, setNewCustomer] = useState({
+    name: "", address: "", city: "", phone: "", email: "", vat: "", fiscal: "", sdi: "", destination: ""
+  });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -29,7 +31,17 @@ export default function CustomerPicker({ customer, onChange }) {
     : customers.slice(0, 10);
 
   const selectCustomer = (c) => {
-    onChange({ name: c.name || "", address: c.address || "", city: c.city || "", phone: c.phone || "", email: c.email || "", vat: c.vat || "", fiscal: c.fiscal || "" });
+    onChange({
+      name: c.name || "",
+      address: c.address || "",
+      city: c.city || "",
+      phone: c.phone || "",
+      email: c.email || "",
+      vat: c.vat || "",
+      fiscal: c.fiscal || "",
+      sdi: c.sdi || "",
+      destination: c.destination || "",
+    });
     setSearch("");
     setShowDropdown(false);
   };
@@ -37,11 +49,11 @@ export default function CustomerPicker({ customer, onChange }) {
   const handleSaveNew = async () => {
     if (!newCustomer.name) { toast.error("Inserisci il nome"); return; }
     setSaving(true);
-    const saved = await base44.entities.Customer.create(newCustomer);
+    await base44.entities.Customer.create(newCustomer);
     const updated = await base44.entities.Customer.list("-updated_date", 200);
     setCustomers(updated);
     selectCustomer(newCustomer);
-    setNewCustomer({ name: "", address: "", city: "", phone: "", email: "", vat: "", fiscal: "" });
+    setNewCustomer({ name: "", address: "", city: "", phone: "", email: "", vat: "", fiscal: "", sdi: "", destination: "" });
     setShowNewForm(false);
     setSaving(false);
     toast.success("Cliente salvato!");
@@ -88,12 +100,14 @@ export default function CustomerPicker({ customer, onChange }) {
           <p className="text-xs font-semibold text-muted-foreground uppercase">Nuovo Cliente</p>
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2"><Label className="text-xs">Nome *</Label><Input value={newCustomer.name} onChange={e => setNewCustomer(p => ({ ...p, name: e.target.value }))} className="rounded-lg h-8 text-sm" /></div>
-            <div className="col-span-2"><Label className="text-xs">Indirizzo</Label><Input value={newCustomer.address} onChange={e => setNewCustomer(p => ({ ...p, address: e.target.value }))} className="rounded-lg h-8 text-sm" /></div>
+            <div className="col-span-2"><Label className="text-xs">Indirizzo (Sede Legale)</Label><Input value={newCustomer.address} onChange={e => setNewCustomer(p => ({ ...p, address: e.target.value }))} className="rounded-lg h-8 text-sm" /></div>
             <div><Label className="text-xs">Città</Label><Input value={newCustomer.city} onChange={e => setNewCustomer(p => ({ ...p, city: e.target.value }))} className="rounded-lg h-8 text-sm" /></div>
             <div><Label className="text-xs">Telefono</Label><Input value={newCustomer.phone} onChange={e => setNewCustomer(p => ({ ...p, phone: e.target.value }))} className="rounded-lg h-8 text-sm" /></div>
             <div><Label className="text-xs">Email</Label><Input type="email" value={newCustomer.email} onChange={e => setNewCustomer(p => ({ ...p, email: e.target.value }))} className="rounded-lg h-8 text-sm" /></div>
             <div><Label className="text-xs">P.IVA</Label><Input value={newCustomer.vat} onChange={e => setNewCustomer(p => ({ ...p, vat: e.target.value }))} className="rounded-lg h-8 text-sm" /></div>
             <div><Label className="text-xs">Cod. Fiscale</Label><Input value={newCustomer.fiscal} onChange={e => setNewCustomer(p => ({ ...p, fiscal: e.target.value }))} className="rounded-lg h-8 text-sm" /></div>
+            <div><Label className="text-xs">Codice Univoco (SDI)</Label><Input value={newCustomer.sdi} onChange={e => setNewCustomer(p => ({ ...p, sdi: e.target.value }))} placeholder="es. 0000000" className="rounded-lg h-8 text-sm" /></div>
+            <div className="col-span-2"><Label className="text-xs">Sede di Destinazione Merce</Label><Input value={newCustomer.destination} onChange={e => setNewCustomer(p => ({ ...p, destination: e.target.value }))} placeholder="Indirizzo / luogo consegna merce" className="rounded-lg h-8 text-sm" /></div>
           </div>
           <div className="flex gap-2 pt-1">
             <Button size="sm" onClick={handleSaveNew} disabled={saving} className="flex-1 rounded-lg bg-secondary hover:bg-secondary/90 text-secondary-foreground">
@@ -108,11 +122,15 @@ export default function CustomerPicker({ customer, onChange }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
           <Label>Nome / Ragione Sociale *</Label>
-          <Input value={customer.name} onChange={e => onChange({ ...customer, name: e.target.value })} className="rounded-xl" />
+          <Input value={customer.name || ""} onChange={e => onChange({ ...customer, name: e.target.value })} className="rounded-xl" />
         </div>
-        <div className="col-span-2">
-          <Label>Indirizzo</Label>
+        <div>
+          <Label>Indirizzo (Sede Legale)</Label>
           <Input value={customer.address || ""} onChange={e => onChange({ ...customer, address: e.target.value })} className="rounded-xl" />
+        </div>
+        <div>
+          <Label>Città</Label>
+          <Input value={customer.city || ""} onChange={e => onChange({ ...customer, city: e.target.value })} className="rounded-xl" />
         </div>
         <div>
           <Label>Telefono</Label>
@@ -129,6 +147,24 @@ export default function CustomerPicker({ customer, onChange }) {
         <div>
           <Label>Codice Fiscale</Label>
           <Input value={customer.fiscal || ""} onChange={e => onChange({ ...customer, fiscal: e.target.value })} className="rounded-xl" />
+        </div>
+        <div className="col-span-2">
+          <Label>Codice Univoco (SDI)</Label>
+          <Input
+            value={customer.sdi || ""}
+            onChange={e => onChange({ ...customer, sdi: e.target.value })}
+            placeholder="Inserisci Codice Univoco per Fattura (es. 0000000)"
+            className="rounded-xl"
+          />
+        </div>
+        <div className="col-span-2">
+          <Label>Sede di Destinazione della Merce</Label>
+          <Input
+            value={customer.destination || ""}
+            onChange={e => onChange({ ...customer, destination: e.target.value })}
+            placeholder="Indirizzo / sede di destinazione merce (se diverso dalla sede legale)"
+            className="rounded-xl"
+          />
         </div>
       </div>
     </div>

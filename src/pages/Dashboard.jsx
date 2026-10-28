@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Package, ShoppingCart, Users, Flame, TrendingUp, ArrowRight } from "lucide-react";
+import { Package, ShoppingCart, Users, TrendingUp, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NecBadge from "../components/NecBadge";
 import { format } from "date-fns";
@@ -47,8 +47,8 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-4 border-muted border-t-secondary rounded-full animate-spin" />
-      </div>);
-
+      </div>
+    );
   }
 
   return (
@@ -61,9 +61,12 @@ export default function Dashboard() {
       </div>
 
       {/* Date */}
-      <div className="text-center -mt-3">
-        <span className="text-sm text-muted-foreground">
+      <div className="text-center -mt-3 space-y-1">
+        <span className="text-sm text-muted-foreground block">
           {format(new Date(), "EEEE d MMMM yyyy", { locale: it })}
+        </span>
+        <span className="text-[11px] text-muted-foreground/70 block">
+          Ultimo aggiornamento: {format(new Date(), "dd/MM/yyyy", { locale: it })}
         </span>
       </div>
 
@@ -111,15 +114,15 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Sales */}
-      {sales.length > 0 &&
-      <div className="space-y-3">
+      {sales.length > 0 && (
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Ultime Vendite</h2>
             <Link to="/history" className="text-xs text-secondary font-medium">Vedi tutte →</Link>
           </div>
           <div className="space-y-2">
-            {sales.slice(0, 5).map((sale) =>
-          <div key={sale.id} className="bg-card rounded-xl p-3 border border-border flex items-center justify-between">
+            {sales.slice(0, 5).map((sale) => (
+              <div key={sale.id} className="bg-card rounded-xl p-3 border border-border flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-sm">Vendita #{sale.sale_number}</p>
                   <p className="text-xs text-muted-foreground">
@@ -128,10 +131,10 @@ export default function Dashboard() {
                 </div>
                 <span className="font-bold text-sm">€ {(sale.total || 0).toFixed(2)}</span>
               </div>
-          )}
+            ))}
           </div>
         </div>
-      }
-    </div>);
-
+      )}
+    </div>
+  );
 }

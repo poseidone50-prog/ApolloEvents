@@ -209,5 +209,14 @@ export const base44 = {
     Contract: makeFirestoreDB("contracts"),
     Customer: makeFirestoreDB("customers"),
     Document: makeFirestoreDB("documents")
+  },
+  integrations: {
+    Core: {
+      SendEmail: async ({ to, subject, body }) => {
+        const mailtoUrl = `mailto:${encodeURIComponent(to || "")}?subject=${encodeURIComponent(subject || "")}&body=${encodeURIComponent(body || "")}`;
+        window.open(mailtoUrl, "_blank");
+        return { success: true };
+      }
+    }
   }
 };

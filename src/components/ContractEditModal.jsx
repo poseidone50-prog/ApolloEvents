@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ContractEditModal({ contract, onClose, onSave }) {
@@ -16,18 +16,33 @@ export default function ContractEditModal({ contract, onClose, onSave }) {
 
   const handleSave = async () => {
     setSaving(true);
-    await base44.entities.Contract.update(contract.id, form);
+    const paidTotal = Array.isArray(form.deposits) ? form.deposits.reduce((acc, d) => acc + (Number(d.amount) || 0), 0) : 0;
+    await base44.entities.Contract.update(contract.id, { ...form, deposit: paidTotal });
     setSaving(false);
     toast.success("Contratto aggiornato!");
     onSave();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-      <div className="bg-card w-full md:max-w-lg md:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between rounded-t-2xl">
-          <h2 className="font-bold text-lg">Modifica Contratto</h2>
-          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg"><X className="w-5 h-5" /></button>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 md:p-4">
+      <div
+        className="bg-card w-full md:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-border"
+        style={{ maxHeight: "85vh" }}
+      >
+        <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between gap-2 z-10">
+          <h2 className="font-bold text-base truncate">Modifica Contratto</h2>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={saving}
+              className="rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold"
+            >
+              <Check className="w-4 h-4 mr-1" />
+              {saving ? "..." : "Salva"}
+            </Button>
+            <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg"><X className="w-5 h-5" /></button>
+          </div>
         </div>
         <div className="p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -79,7 +94,7 @@ export default function ContractEditModal({ contract, onClose, onSave }) {
                 </Button>
               </div>
             </div>
-            
+
             {Array.isArray(form.deposits) && form.deposits.length > 0 ? (
               <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
                 {form.deposits.map((d, i) => (
@@ -117,20 +132,20 @@ export default function ContractEditModal({ contract, onClose, onSave }) {
             </Select>
           </div>
           <div><Label>Note</Label><Textarea value={form.notes || ""} onChange={e => set("notes", e.target.value)} rows={2} className="rounded-xl text-sm" /></div>
-          
+
           <div className="bg-muted/50 p-3 rounded-xl border border-border space-y-1">
-             <div className="flex justify-between text-xs text-muted-foreground">
-               <span>Totale Netto</span>
-               <span>€{((form.total || 0) - (form.discount || 0)).toFixed(2)}</span>
-             </div>
-             <div className="flex justify-between text-xs text-emerald-600 font-medium">
-               <span>Pagato</span>
-               <span>€{(Array.isArray(form.deposits) ? form.deposits.reduce((acc, d) => acc + (d.amount || 0), 0) : 0).toFixed(2)}</span>
-             </div>
-             <div className="flex justify-between font-bold text-sm pt-1 border-t border-border/50">
-               <span>Saldo Rimanente</span>
-               <span className="text-primary font-black">€{Math.max(0, ((form.total || 0) - (form.discount || 0)) - (Array.isArray(form.deposits) ? form.deposits.reduce((acc, d) => acc + (d.amount || 0), 0) : 0)).toFixed(2)}</span>
-             </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Totale Netto</span>
+              <span>€{((form.total || 0) - (form.discount || 0)).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-xs text-emerald-600 font-medium">
+              <span>Pagato</span>
+              <span>€{(Array.isArray(form.deposits) ? form.deposits.reduce((acc, d) => acc + (d.amount || 0), 0) : 0).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between font-bold text-sm pt-1 border-t border-border/50">
+              <span>Saldo Rimanente</span>
+              <span className="text-primary font-black">€{Math.max(0, ((form.total || 0) - (form.discount || 0)) - (Array.isArray(form.deposits) ? form.deposits.reduce((acc, d) => acc + (d.amount || 0), 0) : 0)).toFixed(2)}</span>
+            </div>
           </div>
           <Button onClick={handleSave} disabled={saving} className="w-full h-12 rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold">
             {saving ? "Salvataggio..." : "Salva Modifiche"}

@@ -115,11 +115,14 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 pb-24 md:pb-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
           <SettingsIcon className="w-6 h-6 text-secondary" />
           Impostazioni
         </h1>
+        <span className="text-xs bg-secondary/10 text-secondary border border-secondary/20 px-3 py-1 rounded-full font-semibold">
+          Aggiornamento: {format(new Date(), "dd/MM/yyyy")}
+        </span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
