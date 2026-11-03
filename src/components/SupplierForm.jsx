@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 
 export default function SupplierForm({ supplier, onSave, onClose }) {
   const [form, setForm] = useState({
@@ -29,34 +30,48 @@ export default function SupplierForm({ supplier, onSave, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
-    if (supplier?.id) {
-      await base44.entities.Supplier.update(supplier.id, form);
-    } else {
-      await base44.entities.Supplier.create(form);
+    e.stopPropagation();
+    if (!form.name || !form.name.trim()) {
+      toast.error("Inserisci il nome del fornitore");
+      return;
     }
-    setSaving(false);
-    onSave();
+    setSaving(true);
+    try {
+      let saved;
+      if (supplier?.id) {
+        saved = await base44.entities.Supplier.update(supplier.id, form);
+        toast.success("Fornitore aggiornato!");
+      } else {
+        saved = await base44.entities.Supplier.create(form);
+        toast.success("Nuovo fornitore creato!");
+      }
+      onSave(saved);
+    } catch (err) {
+      console.error(err);
+      toast.error("Errore durante il salvataggio del fornitore");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-end md:items-center justify-center" onClick={e => e.stopPropagation()}>
       <div className="bg-card w-full md:max-w-lg md:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between rounded-t-2xl">
           <h2 className="font-bold text-lg">{supplier?.id ? "Modifica Fornitore" : "Nuovo Fornitore"}</h2>
-          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg">
+          <button type="button" onClick={onClose} className="p-2 hover:bg-muted rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Label>Nome</Label>
-              <Input value={form.name} onChange={e => handleChange("name", e.target.value)} required />
+              <Label>Nome *</Label>
+              <Input value={form.name} onChange={e => handleChange("name", e.target.value)} placeholder="Nome fornitore" required />
             </div>
             <div className="col-span-2">
               <Label>Ragione Sociale</Label>
-              <Input value={form.company} onChange={e => handleChange("company", e.target.value)} />
+              <Input value={form.company} onChange={e => handleChange("company", e.target.value)} placeholder="Ragione sociale" />
             </div>
             <div>
               <Label>Partita IVA</Label>

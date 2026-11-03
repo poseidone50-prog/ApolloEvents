@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   FileText, Truck, Search, Trash2, Printer, Plus, ScrollText,
-  Save, FolderOpen, PackagePlus, ShoppingCart, X
+  Save, FolderOpen, PackagePlus, ShoppingCart, UserPlus, Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import ContractForm from "../components/ContractForm";
 import CustomerPicker from "../components/CustomerPicker";
+import SupplierForm from "../components/SupplierForm";
+import ArticleForm from "../components/ArticleForm";
 
 const LOGO = "/logo.png";
 
@@ -62,6 +64,14 @@ function DocumentForm({ type }) {
   const [linkedSaleNumber, setLinkedSaleNumber] = useState("");
   // Solo per Fattura Acquisti
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
+  const [supplierNameInput, setSupplierNameInput] = useState("");
+  const [showSupplierForm, setShowSupplierForm] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState(null);
+  // Modale Nuovo Articolo
+  const [showArticleForm, setShowArticleForm] = useState(false);
+  const [prefillArticle, setPrefillArticle] = useState(null);
+  const [articleSelectKey, setArticleSelectKey] = useState(0);
+
   const [notes, setNotes] = useState("");
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -76,16 +86,24 @@ function DocumentForm({ type }) {
   const loadDocs = async () => {
     if (isPurchase) {
       const list = await base44.entities.Purchase.list("-created_date", 500);
-      setExistingDocs(list);
+      setExistingDocs((list || []).filter(d => d && d.id));
     } else {
       const list = await base44.entities.Document.filter({ type }, "-created_date", 500);
-      setExistingDocs(list);
+      setExistingDocs((list || []).filter(d => d && d.id));
+    }
+  };
+
+  const loadArticlesAndSuppliers = async () => {
+    const arts = await base44.entities.Article.list("-updated_date", 1000);
+    setArticles((arts || []).filter(a => a && a.id));
+    if (isPurchase) {
+      const sups = await base44.entities.Supplier.list("-updated_date", 1000);
+      setSuppliers((sups || []).filter(s => s && s.id));
     }
   };
 
   useEffect(() => {
-    base44.entities.Article.list("-updated_date", 500).then(setArticles);
-    if (isPurchase) base44.entities.Supplier.list().then(setSuppliers);
+    loadArticlesAndSuppliers();
     loadDocs();
   }, [type]);
 
@@ -93,16 +111,44 @@ function DocumentForm({ type }) {
     ? articles.filter(a =>
         (a.description || "").toLowerCase().includes(barcodeSearch.toLowerCase()) ||
         (a.barcode || "").toLowerCase().includes(barcodeSearch.toLowerCase())
-      ).slice(0, 20)
+      ).slice(0, 30)
     : [];
 
-  const addArticleToItems = (a) => {
+  const filteredSuppliers = supplierNameInput.trim() && !suppliers.some(s => s.id === selectedSupplierId && s.name === supplierNameInput)
+    ? suppliers.filter(s =>
+        (s.name || "").toLowerCase().includes(supplierNameInput.toLowerCase()) ||
+        (s.company || "").toLowerCase().includes(supplierNameInput.toLowerCase())
+      ).slice(0, 10)
+    : [];
+
+  const handleSelectSupplier = (supId) => {
+    setSelectedSupplierId(supId);
+    const sup = suppliers.find(s => s.id === supId);
+    if (sup) {
+      setSupplierNameInput(sup.name || "");
+    }
+  };
+
+  const handleSupplierSaved = async (savedSup) => {
+    const sups = await base44.entities.Supplier.list("-updated_date", 1000);
+    const validSups = (sups || []).filter(s => s && s.id);
+    setSuppliers(validSups);
+    if (savedSup?.id) {
+      setSelectedSupplierId(savedSup.id);
+      setSupplierNameInput(savedSup.name || "");
+    }
+    setShowSupplierForm(false);
+    setEditingSupplier(null);
+  };
+
+  const addArticleToItems = (a, initialQty = 1) => {
+    const qtyToAdd = Number(initialQty) > 0 ? Number(initialQty) : 1;
     setItems(prev => {
-      const existing = prev.find(i => i.article_id === a.id);
-      if (existing) {
-        return prev.map(i => {
-          if (i.article_id !== a.id) return i;
-          const q = (Number(i.quantity) || 0) + 1;
+      const existingIdx = prev.findIndex(i => i.article_id && i.article_id === a.id);
+      if (existingIdx > -1) {
+        return prev.map((i, idx) => {
+          if (idx !== existingIdx) return i;
+          const q = (Number(i.quantity) || 0) + qtyToAdd;
           const p = Number(i.unit_price) || 0;
           return { ...i, quantity: q, total: q * p };
         });
@@ -112,46 +158,107 @@ function DocumentForm({ type }) {
         article_id: a.id,
         barcode: a.barcode || "",
         description: a.description || "",
-        quantity: 1,
+        quantity: qtyToAdd,
         unit_price: defaultPrice,
         vat_rate: Number(a.vat_rate) || 22,
-        total: defaultPrice,
+        total: defaultPrice * qtyToAdd,
       }];
     });
     setBarcodeSearch("");
   };
 
-  const updateQty = (id, delta) => {
-    setItems(prev => prev.map(i => {
-      if (i.article_id !== id) return i;
-      const q = (Number(i.quantity) || 0) + delta;
+  const handleAddByBarcode = (e) => {
+    e.preventDefault();
+    const code = barcodeSearch.trim();
+    if (!code) return;
+    const exactMatch = articles.find(
+      a => (a.barcode && a.barcode.toLowerCase() === code.toLowerCase()) ||
+           (a.description && a.description.toLowerCase() === code.toLowerCase())
+    );
+    if (exactMatch) {
+      addArticleToItems(exactMatch);
+      toast.success(`"${exactMatch.description}" aggiunto`);
+      inputRef.current?.focus();
+      return;
+    }
+    if (filteredArticles.length > 0) {
+      addArticleToItems(filteredArticles[0]);
+      toast.success(`"${filteredArticles[0].description}" aggiunto`);
+      inputRef.current?.focus();
+      return;
+    }
+    // Se l'articolo non esiste ancora in magazzino, apri il form Nuovo Articolo precompilato
+    const isNumericBarcode = /^\d+$/.test(code);
+    setPrefillArticle({
+      barcode: isNumericBarcode ? code : "",
+      description: isNumericBarcode ? "" : code,
+      supplier_id: selectedSupplierId || "",
+      supplier_name: selectedSupplier?.name || supplierNameInput || "",
+    });
+    setShowArticleForm(true);
+  };
+
+  const handleAddManualRow = () => {
+    setItems(prev => [
+      ...prev,
+      {
+        article_id: "",
+        barcode: "",
+        description: barcodeSearch.trim() || "",
+        quantity: 1,
+        unit_price: 0,
+        vat_rate: 22,
+        total: 0,
+      },
+    ]);
+    setBarcodeSearch("");
+  };
+
+  const handleArticleSaved = async (savedArt) => {
+    const arts = await base44.entities.Article.list("-updated_date", 1000);
+    setArticles((arts || []).filter(a => a && a.id));
+    if (savedArt?.id) {
+      addArticleToItems(savedArt, savedArt.initialInvoiceQty || 1);
+    }
+    setShowArticleForm(false);
+    setPrefillArticle(null);
+  };
+
+  const updateQty = (idx, delta) => {
+    setItems(prev => prev.map((item, i) => {
+      if (i !== idx) return item;
+      const q = (Number(item.quantity) || 0) + delta;
       if (q <= 0) return null;
-      return { ...i, quantity: q, total: q * (Number(i.unit_price) || 0) };
+      return { ...item, quantity: q, total: q * (Number(item.unit_price) || 0) };
     }).filter(Boolean));
   };
 
-  const setExactQty = (id, val) => {
+  const setExactQty = (idx, val) => {
     if (val === "") {
-      setItems(prev => prev.map(i => i.article_id !== id ? i : { ...i, quantity: "", total: 0 }));
+      setItems(prev => prev.map((item, i) => i !== idx ? item : { ...item, quantity: "", total: 0 }));
       return;
     }
     const q = parseInt(val, 10);
     if (isNaN(q) || q < 0) return;
-    setItems(prev => prev.map(i => {
-      if (i.article_id !== id) return i;
-      return { ...i, quantity: q, total: q * (Number(i.unit_price) || 0) };
+    setItems(prev => prev.map((item, i) => {
+      if (i !== idx) return item;
+      return { ...item, quantity: q, total: q * (Number(item.unit_price) || 0) };
     }));
   };
 
-  const updatePrice = (id, price) => {
-    setItems(prev => prev.map(i => {
-      if (i.article_id !== id) return i;
+  const updatePrice = (idx, price) => {
+    setItems(prev => prev.map((item, i) => {
+      if (i !== idx) return item;
       const p = parseFloat(price) || 0;
-      return { ...i, unit_price: price === "" ? "" : p, total: (Number(i.quantity) || 0) * p };
+      return { ...item, unit_price: price === "" ? "" : price, total: (Number(item.quantity) || 0) * p };
     }));
   };
 
-  const removeItem = (id) => setItems(prev => prev.filter(i => i.article_id !== id));
+  const updateDescription = (idx, desc) => {
+    setItems(prev => prev.map((item, i) => i !== idx ? item : { ...item, description: desc }));
+  };
+
+  const removeItem = (idx) => setItems(prev => prev.filter((_, i) => i !== idx));
 
   const handleSelectDoc = (did) => {
     setLoadedId(did);
@@ -161,6 +268,7 @@ function DocumentForm({ type }) {
       setDocDate(new Date().toISOString().slice(0, 10));
       setCustomer(emptyCustomer());
       setSelectedSupplierId("");
+      setSupplierNameInput("");
       setItems([]);
       setNotes("");
       setCausale("Vendita");
@@ -177,6 +285,7 @@ function DocumentForm({ type }) {
       setDocNumber(d.invoice_number || "");
       setDocDate(d.invoice_date || new Date().toISOString().slice(0, 10));
       setSelectedSupplierId(d.supplier_id || "");
+      setSupplierNameInput(d.supplier_name || "");
       setItems(Array.isArray(d.items) ? d.items.map(it => ({ ...it })) : []);
       setNotes(d.notes || "");
     } else {
@@ -215,8 +324,8 @@ function DocumentForm({ type }) {
   };
 
   const handleSave = async () => {
-    if (isPurchase && !selectedSupplierId) {
-      toast.error("Seleziona un fornitore prima di salvare");
+    if (isPurchase && !selectedSupplierId && !supplierNameInput.trim()) {
+      toast.error("Seleziona o inserisci il nome di un fornitore prima di salvare");
       return;
     }
     if (!isPurchase && (!customer.name || !customer.name.trim())) {
@@ -230,16 +339,17 @@ function DocumentForm({ type }) {
         const vr = Number(it.vat_rate) || 22;
         return {
           ...it,
+          description: (it.description || "").trim(),
           quantity: q,
           unit_price: p,
           vat_rate: vr,
           total: q * p,
         };
       })
-      .filter(it => it.quantity > 0);
+      .filter(it => it.quantity > 0 && it.description);
 
     if (normalizedItems.length === 0) {
-      toast.error("Aggiungi almeno un articolo con quantità maggiore di 0");
+      toast.error("Aggiungi almeno un articolo con descrizione e quantità maggiore di 0");
       return;
     }
 
@@ -250,26 +360,78 @@ function DocumentForm({ type }) {
       const normVatTotal = normTotal - normSubtotal;
 
       if (isPurchase) {
+        let finalSupplierId = selectedSupplierId;
+        let finalSupplierName = selectedSupplier?.name || supplierNameInput.trim();
+
+        // Se l'utente ha scritto manualmente il nome di un nuovo fornitore senza selezionarlo, crealo automaticamente
+        if (!finalSupplierId && finalSupplierName) {
+          const existingByName = suppliers.find(
+            s => (s.name || "").toLowerCase() === finalSupplierName.toLowerCase()
+          );
+          if (existingByName) {
+            finalSupplierId = existingByName.id;
+            finalSupplierName = existingByName.name;
+          } else {
+            const newSup = await base44.entities.Supplier.create({ name: finalSupplierName });
+            finalSupplierId = newSup.id;
+            finalSupplierName = newSup.name;
+          }
+          setSelectedSupplierId(finalSupplierId);
+        }
+
+        // Assicuriamoci che eventuali righe manuali in Fattura Acquisti siano collegate o create in Magazzino
+        const resolvedItems = [];
+        let currentArticles = [...articles];
+        for (const item of normalizedItems) {
+          let art = currentArticles.find(
+            a => (item.article_id && a.id === item.article_id) ||
+                 (item.barcode && a.barcode && a.barcode === item.barcode) ||
+                 (a.description && a.description.toLowerCase() === item.description.toLowerCase())
+          );
+          if (!art) {
+            art = await base44.entities.Article.create({
+              barcode: item.barcode || "",
+              description: item.description,
+              supplier_id: finalSupplierId,
+              supplier_name: finalSupplierName,
+              purchase_price: item.unit_price,
+              sale_price: item.unit_price,
+              vat_rate: item.vat_rate || 22,
+              nec_kg: 0,
+              category: "F2 5°C",
+              quantity: 0,
+            });
+            currentArticles.push(art);
+          }
+          resolvedItems.push({
+            ...item,
+            article_id: art.id,
+            barcode: item.barcode || art.barcode || "",
+          });
+        }
+
         const payload = {
-          supplier_id: selectedSupplierId,
-          supplier_name: selectedSupplier?.name || "",
+          supplier_id: finalSupplierId,
+          supplier_name: finalSupplierName,
           invoice_number: docNumber,
           invoice_date: docDate,
-          items: normalizedItems,
+          items: resolvedItems,
           total: normTotal,
           notes,
         };
         if (loadedId === "new") {
           const res = await base44.entities.Purchase.create(payload);
-          for (const item of normalizedItems) {
-            const art = articles.find(a => a.id === item.article_id || (item.barcode && a.barcode === item.barcode));
+          for (const item of resolvedItems) {
+            const art = currentArticles.find(a => a.id === item.article_id);
             if (art) {
+              const newQty = (Number(art.quantity) || 0) + item.quantity;
               await base44.entities.Article.update(art.id, {
-                quantity: (Number(art.quantity) || 0) + item.quantity,
+                quantity: newQty,
                 purchase_price: item.unit_price,
-                supplier_id: selectedSupplierId,
-                supplier_name: selectedSupplier?.name || "",
+                supplier_id: finalSupplierId,
+                supplier_name: finalSupplierName,
               });
+              art.quantity = newQty;
             }
           }
           setLoadedId(res.id);
@@ -280,14 +442,14 @@ function DocumentForm({ type }) {
           const latestItemInfo = {};
 
           for (const oldItem of (oldDoc?.items || [])) {
-            const art = articles.find(a => a.id === oldItem.article_id || (oldItem.barcode && a.barcode === oldItem.barcode));
+            const art = currentArticles.find(a => a.id === oldItem.article_id || (oldItem.barcode && a.barcode === oldItem.barcode));
             if (art) {
               stockDiffs[art.id] = (stockDiffs[art.id] || 0) - (Number(oldItem.quantity) || 0);
             }
           }
 
-          for (const newItem of normalizedItems) {
-            const art = articles.find(a => a.id === newItem.article_id || (newItem.barcode && a.barcode === newItem.barcode));
+          for (const newItem of resolvedItems) {
+            const art = currentArticles.find(a => a.id === newItem.article_id || (newItem.barcode && a.barcode === newItem.barcode));
             if (art) {
               stockDiffs[art.id] = (stockDiffs[art.id] || 0) + (Number(newItem.quantity) || 0);
               latestItemInfo[art.id] = newItem;
@@ -295,15 +457,15 @@ function DocumentForm({ type }) {
           }
 
           for (const [artId, diff] of Object.entries(stockDiffs)) {
-            const art = articles.find(a => a.id === artId);
+            const art = currentArticles.find(a => a.id === artId);
             if (art && (diff !== 0 || latestItemInfo[artId])) {
               const updateData = {
                 quantity: Math.max(0, (Number(art.quantity) || 0) + diff),
               };
               if (latestItemInfo[artId]) {
                 updateData.purchase_price = Number(latestItemInfo[artId].unit_price) || art.purchase_price || 0;
-                updateData.supplier_id = selectedSupplierId;
-                updateData.supplier_name = selectedSupplier?.name || "";
+                updateData.supplier_id = finalSupplierId;
+                updateData.supplier_name = finalSupplierName;
               }
               await base44.entities.Article.update(artId, updateData);
             }
@@ -312,7 +474,8 @@ function DocumentForm({ type }) {
           await base44.entities.Purchase.update(loadedId, payload);
           toast.success("Fattura Acquisti e giacenze aggiornate!");
         }
-        base44.entities.Article.list("-updated_date", 500).then(setArticles);
+        await loadArticlesAndSuppliers();
+        setItems(resolvedItems);
       } else {
         const payload = {
           type,
@@ -338,7 +501,7 @@ function DocumentForm({ type }) {
                 });
               }
             }
-            base44.entities.Article.list("-updated_date", 500).then(setArticles);
+            await loadArticlesAndSuppliers();
           }
           setLoadedId(res.id);
           toast.success(`${docLabel} salvato!`);
@@ -368,14 +531,14 @@ function DocumentForm({ type }) {
                 }
               }
             }
-            base44.entities.Article.list("-updated_date", 500).then(setArticles);
+            await loadArticlesAndSuppliers();
           }
           await base44.entities.Document.update(loadedId, payload);
           toast.success(type === "ddt" ? "DDT e giacenze aggiornati!" : `${docLabel} aggiornato!`);
         }
+        setItems(normalizedItems);
       }
 
-      setItems(normalizedItems);
       await loadDocs();
     } catch (err) {
       console.error(err);
@@ -521,7 +684,7 @@ function DocumentForm({ type }) {
               <>
                 <div className="border border-gray-300 rounded-xl p-3">
                   <p className="font-bold text-xs uppercase text-gray-500 mb-2">Fornitore</p>
-                  <p className="font-bold">{selectedSupplier?.name || "—"}</p>
+                  <p className="font-bold">{selectedSupplier?.name || supplierNameInput || "—"}</p>
                   {selectedSupplier?.company && <p>{selectedSupplier.company}</p>}
                   {selectedSupplier?.address && <p>{selectedSupplier.address}</p>}
                   {selectedSupplier?.vat_number && <p>P.IVA: {selectedSupplier.vat_number}</p>}
@@ -715,14 +878,77 @@ function DocumentForm({ type }) {
 
         {/* Fornitore (acquisto) o Destinatario (fattura/ddt) */}
         {isPurchase ? (
-          <div>
-            <Label>Fornitore</Label>
-            <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
-              <SelectTrigger className="rounded-xl"><SelectValue placeholder="Seleziona fornitore..." /></SelectTrigger>
-              <SelectContent>
-                {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}{s.company ? ` – ${s.company}` : ""}</SelectItem>)}
-              </SelectContent>
-            </Select>
+          <div className="space-y-3 pt-1 border-t border-border/60">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <Label className="font-semibold">Fornitore</Label>
+              <div className="flex items-center gap-2">
+                {selectedSupplier && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl h-8 text-xs"
+                    onClick={() => { setEditingSupplier(selectedSupplier); setShowSupplierForm(true); }}
+                  >
+                    <Edit className="w-3.5 h-3.5 mr-1" /> Modifica Fornitore
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  className="rounded-xl h-8 text-xs bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold"
+                  onClick={() => { setEditingSupplier(null); setShowSupplierForm(true); }}
+                >
+                  <UserPlus className="w-3.5 h-3.5 mr-1" /> + Nuovo Fornitore
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground">Seleziona da rubrica fornitori ({suppliers.length})</Label>
+                <Select value={selectedSupplierId || undefined} onValueChange={handleSelectSupplier}>
+                  <SelectTrigger className="rounded-xl mt-1">
+                    <SelectValue placeholder="Seleziona fornitore dall'elenco..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map(s => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}{s.company ? ` – ${s.company}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="relative">
+                <Label className="text-xs text-muted-foreground">Oppure scrivi / cerca Nome Fornitore</Label>
+                <Input
+                  value={supplierNameInput}
+                  onChange={e => {
+                    setSupplierNameInput(e.target.value);
+                    const exact = suppliers.find(s => (s.name || "").toLowerCase() === e.target.value.trim().toLowerCase());
+                    setSelectedSupplierId(exact ? exact.id : "");
+                  }}
+                  placeholder="Scrivi nome fornitore..."
+                  className="rounded-xl mt-1"
+                />
+                {filteredSuppliers.length > 0 && (
+                  <div className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-40 overflow-y-auto p-1">
+                    {filteredSuppliers.map(s => (
+                      <button
+                        type="button"
+                        key={s.id}
+                        onClick={() => handleSelectSupplier(s.id)}
+                        className="w-full text-left px-3 py-1.5 rounded-lg hover:bg-muted text-sm flex items-center justify-between"
+                      >
+                        <span className="font-medium truncate">{s.name}</span>
+                        {s.company && <span className="text-xs text-muted-foreground ml-2 truncate">{s.company}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         ) : (
           <CustomerPicker customer={customer} onChange={setCustomer} />
@@ -743,49 +969,159 @@ function DocumentForm({ type }) {
         )}
       </div>
 
-      {/* Ricerca articoli */}
+      {/* Ricerca e inserimento articoli */}
       <div className="bg-card rounded-xl border border-border p-4 space-y-3">
-        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Articoli</h2>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            ref={inputRef}
-            value={barcodeSearch}
-            onChange={e => setBarcodeSearch(e.target.value)}
-            placeholder="Cerca per nome o barcode..."
-            className="pl-9 rounded-xl"
-          />
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
+            Articoli ({items.length})
+          </h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl h-8 text-xs font-semibold"
+              onClick={handleAddManualRow}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" /> Riga Manuale
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="rounded-xl h-8 text-xs bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold"
+              onClick={() => {
+                setPrefillArticle({
+                  supplier_id: selectedSupplierId || "",
+                  supplier_name: selectedSupplier?.name || supplierNameInput || "",
+                });
+                setShowArticleForm(true);
+              }}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" /> + Nuovo Articolo
+            </Button>
+          </div>
         </div>
-        {filteredArticles.length > 0 && (
-          <div className="border border-border rounded-xl max-h-40 overflow-y-auto">
+
+        {/* Selettore rapido da menu a tendina + Ricerca / Barcode */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs text-muted-foreground">Seleziona articolo dal catalogo ({articles.length})</Label>
+            <Select
+              key={articleSelectKey}
+              onValueChange={(artId) => {
+                const a = articles.find(x => x.id === artId);
+                if (a) {
+                  addArticleToItems(a);
+                  toast.success(`"${a.description}" aggiunto`);
+                }
+                setArticleSelectKey(k => k + 1);
+              }}
+            >
+              <SelectTrigger className="rounded-xl mt-1">
+                <SelectValue placeholder="Scegli un articolo dall'elenco..." />
+              </SelectTrigger>
+              <SelectContent>
+                {articles.slice(0, 200).map(a => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.description} {a.barcode ? `(${a.barcode})` : ""} – €{Number(isPurchase ? a.purchase_price : a.sale_price || 0).toFixed(2)} [Giac: {a.quantity || 0}]
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-xs text-muted-foreground">Oppure cerca per nome / scansiona barcode</Label>
+            <form onSubmit={handleAddByBarcode} className="flex gap-2 mt-1">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  ref={inputRef}
+                  value={barcodeSearch}
+                  onChange={e => setBarcodeSearch(e.target.value)}
+                  placeholder="Cerca per nome o codice a barre..."
+                  className="pl-9 rounded-xl"
+                />
+              </div>
+              <Button type="submit" className="rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold">
+                Aggiungi
+              </Button>
+            </form>
+          </div>
+        </div>
+
+        {barcodeSearch.trim() && (
+          <div className="border border-border rounded-xl max-h-48 overflow-y-auto p-1 bg-background space-y-1">
             {filteredArticles.map(a => (
               <button
                 type="button"
                 key={a.id}
-                onClick={() => addArticleToItems(a)}
-                className="w-full text-left px-3 py-2 hover:bg-muted text-sm flex items-center justify-between"
+                onClick={() => {
+                  addArticleToItems(a);
+                  toast.success(`"${a.description}" aggiunto`);
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted text-sm flex items-center justify-between"
               >
-                <span className="truncate">{a.description}</span>
+                <span className="truncate font-medium">{a.description}</span>
                 <span className="text-xs text-muted-foreground ml-2 shrink-0">
-                  {a.barcode} (Giac: {a.quantity || 0})
+                  {a.barcode} · €{Number(isPurchase ? a.purchase_price : a.sale_price || 0).toFixed(2)} (Giac: {a.quantity || 0})
                 </span>
               </button>
             ))}
+            {filteredArticles.length === 0 && (
+              <div className="p-2 text-center space-y-2">
+                <p className="text-xs text-muted-foreground">Nessun articolo trovato per "{barcodeSearch}"</p>
+                <div className="flex justify-center gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl text-xs"
+                    onClick={handleAddManualRow}
+                  >
+                    + Inserisci "{barcodeSearch}" come riga in fattura
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="rounded-xl text-xs bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                    onClick={() => {
+                      const code = barcodeSearch.trim();
+                      const isNumericBarcode = /^\d+$/.test(code);
+                      setPrefillArticle({
+                        barcode: isNumericBarcode ? code : "",
+                        description: isNumericBarcode ? "" : code,
+                        supplier_id: selectedSupplierId || "",
+                        supplier_name: selectedSupplier?.name || supplierNameInput || "",
+                      });
+                      setShowArticleForm(true);
+                    }}
+                  >
+                    + Crea "{barcodeSearch}" in Catalogo Articoli
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Lista articoli aggiunti */}
         <div className="space-y-2">
           {items.map((item, idx) => (
-            <div key={item.article_id || idx} className="flex items-center gap-2 bg-muted/50 rounded-xl p-3 flex-wrap sm:flex-nowrap">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{item.description}</p>
-                <p className="text-xs text-muted-foreground">{item.barcode}</p>
+            <div key={idx} className="flex items-center gap-2 bg-muted/50 rounded-xl p-3 flex-wrap sm:flex-nowrap border border-border/60">
+              <div className="flex-1 min-w-[160px]">
+                <Input
+                  value={item.description}
+                  onChange={e => updateDescription(idx, e.target.value)}
+                  placeholder="Descrizione articolo..."
+                  className="h-8 text-sm font-medium bg-background rounded-lg"
+                />
+                {item.barcode && <p className="text-xs text-muted-foreground mt-0.5 px-1">{item.barcode}</p>}
               </div>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => updateQty(item.article_id, -1)}
+                  onClick={() => updateQty(idx, -1)}
                   className="w-7 h-7 rounded-lg bg-background border border-border flex items-center justify-center font-bold text-sm"
                 >
                   −
@@ -794,12 +1130,12 @@ function DocumentForm({ type }) {
                   type="number"
                   min="1"
                   value={item.quantity}
-                  onChange={e => setExactQty(item.article_id, e.target.value)}
+                  onChange={e => setExactQty(idx, e.target.value)}
                   className="w-14 h-8 text-center font-bold text-sm rounded-lg px-1 bg-background"
                 />
                 <button
                   type="button"
-                  onClick={() => updateQty(item.article_id, 1)}
+                  onClick={() => updateQty(idx, 1)}
                   className="w-7 h-7 rounded-lg bg-background border border-border flex items-center justify-center font-bold text-sm"
                 >
                   +
@@ -810,7 +1146,7 @@ function DocumentForm({ type }) {
                   type="number"
                   step="0.01"
                   value={item.unit_price}
-                  onChange={e => updatePrice(item.article_id, e.target.value)}
+                  onChange={e => updatePrice(idx, e.target.value)}
                   className="h-8 text-sm text-right rounded-lg bg-background"
                   title="Prezzo unitario (€)"
                 />
@@ -820,7 +1156,7 @@ function DocumentForm({ type }) {
               </span>
               <button
                 type="button"
-                onClick={() => removeItem(item.article_id)}
+                onClick={() => removeItem(idx)}
                 className="p-1 hover:bg-destructive/10 rounded-lg"
               >
                 <Trash2 className="w-4 h-4 text-destructive" />
@@ -891,6 +1227,25 @@ function DocumentForm({ type }) {
           <Printer className="w-5 h-5 mr-2" /> Visualizza & Stampa
         </Button>
       </div>
+
+      {/* Modale Nuovo / Modifica Fornitore */}
+      {showSupplierForm && (
+        <SupplierForm
+          supplier={editingSupplier}
+          onSave={handleSupplierSaved}
+          onClose={() => { setShowSupplierForm(false); setEditingSupplier(null); }}
+        />
+      )}
+
+      {/* Modale Nuovo Articolo */}
+      {showArticleForm && (
+        <ArticleForm
+          article={prefillArticle}
+          fromPurchaseInvoice={isPurchase}
+          onSave={handleArticleSaved}
+          onClose={() => { setShowArticleForm(false); setPrefillArticle(null); }}
+        />
+      )}
     </div>
   );
 }

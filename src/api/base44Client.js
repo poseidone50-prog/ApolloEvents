@@ -66,7 +66,7 @@ const makeLocalDB = (collectionName) => {
 };
 
 
-const extractFirestoreData = (docSnap) => ({ id: docSnap.id, ...docSnap.data() });
+const extractFirestoreData = (docSnap) => ({ ...docSnap.data(), id: docSnap.id });
 
 const showPermissionError = (err) => {
   if (err.code === 'permission-denied') {
@@ -76,23 +76,31 @@ const showPermissionError = (err) => {
   }
 };
 
+const sortItemsInMemory = (items, sortBy) => {
+  if (!sortBy) return items;
+  const orderField = sortBy.startsWith("-") ? sortBy.substring(1) : sortBy;
+  const asc = !sortBy.startsWith("-");
+  return [...items].sort((a, b) => {
+    const valA = a[orderField] ?? a.updated_date ?? a.created_date ?? "";
+    const valB = b[orderField] ?? b.updated_date ?? b.created_date ?? "";
+    if (valA < valB) return asc ? -1 : 1;
+    if (valA > valB) return asc ? 1 : -1;
+    return 0;
+  });
+};
+
 const makeFirestoreDB = (collectionName) => {
   const colRef = collection(db, collectionName);
 
   const fallback = makeLocalDB(collectionName);
 
   return {
-    list: async (sortBy = "-created_date", limitTo = 500) => {
+    list: async (sortBy = "-created_date", limitTo = 1000) => {
       try {
-        let q = query(colRef);
-        if (sortBy) {
-          const orderField = sortBy.startsWith("-") ? sortBy.substring(1) : sortBy;
-          const asc = !sortBy.startsWith("-");
-          q = query(q, orderBy(orderField, asc ? "asc" : "desc"));
-        }
-        if (limitTo) q = query(q, limit(limitTo));
-        const snap = await getDocs(q);
-        return snap.docs.map(extractFirestoreData);
+        const snap = await getDocs(colRef);
+        const allItems = snap.docs.map(extractFirestoreData);
+        const sorted = sortItemsInMemory(allItems, sortBy);
+        return limitTo ? sorted.slice(0, limitTo) : sorted;
       } catch (err) {
         if (err.code === 'permission-denied') {
           showPermissionError(err);
@@ -102,43 +110,19 @@ const makeFirestoreDB = (collectionName) => {
         return [];
       }
     },
-    filter: async (criteria, sortBy = "-created_date", limitTo = 500) => {
+    filter: async (criteria, sortBy = "-created_date", limitTo = 1000) => {
       try {
-        let q = query(colRef);
+        const snap = await getDocs(colRef);
+        let data = snap.docs.map(extractFirestoreData);
         for (const [key, value] of Object.entries(criteria)) {
-          q = query(q, where(key, "==", value));
+          data = data.filter(item => item[key] === value);
         }
-        if (sortBy) {
-          const orderField = sortBy.startsWith("-") ? sortBy.substring(1) : sortBy;
-          const asc = !sortBy.startsWith("-");
-          q = query(q, orderBy(orderField, asc ? "asc" : "desc"));
-        }
-        if (limitTo) q = query(q, limit(limitTo));
-        const snap = await getDocs(q);
-        return snap.docs.map(extractFirestoreData);
+        const sorted = sortItemsInMemory(data, sortBy);
+        return limitTo ? sorted.slice(0, limitTo) : sorted;
       } catch (err) {
         if (err.code === 'permission-denied') {
           showPermissionError(err);
           return fallback.filter(criteria, sortBy, limitTo);
-        }
-        if (err.code === 'failed-precondition') {
-          try {
-            let qList = query(colRef);
-            if (sortBy) {
-              const orderField = sortBy.startsWith("-") ? sortBy.substring(1) : sortBy;
-              const asc = !sortBy.startsWith("-");
-              qList = query(qList, orderBy(orderField, asc ? "asc" : "desc"));
-            }
-            const snapList = await getDocs(qList);
-            let data = snapList.docs.map(extractFirestoreData);
-            for (const [key, value] of Object.entries(criteria)) {
-              data = data.filter(item => item[key] === value);
-            }
-            return limitTo ? data.slice(0, limitTo) : data;
-          } catch (fallbackErr) {
-            console.error("Local filter fallback failed:", fallbackErr);
-            return [];
-          }
         }
         showPermissionError(err);
         return [];
@@ -146,9 +130,10 @@ const makeFirestoreDB = (collectionName) => {
     },
     create: async (data) => {
       try {
-        const payload = { ...data, created_date: new Date().toISOString(), updated_date: new Date().toISOString() };
+        const { id: _ignoreId, ...cleanData } = data || {};
+        const payload = { ...cleanData, created_date: new Date().toISOString(), updated_date: new Date().toISOString() };
         const docRef = await addDoc(colRef, payload);
-        return { id: docRef.id, ...payload };
+        return { ...payload, id: docRef.id };
       } catch (err) {
         if (err.code === 'permission-denied') {
           showPermissionError(err);
@@ -161,9 +146,10 @@ const makeFirestoreDB = (collectionName) => {
     update: async (id, data) => {
       try {
         const docRef = doc(db, collectionName, id);
-        const payload = { ...data, updated_date: new Date().toISOString() };
+        const { id: _ignoreId, ...cleanData } = data || {};
+        const payload = { ...cleanData, updated_date: new Date().toISOString() };
         await updateDoc(docRef, payload);
-        return { id, ...payload };
+        return { ...payload, id };
       } catch (err) {
         if (err.code === 'permission-denied') {
           showPermissionError(err);
