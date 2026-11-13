@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import {
   History as HistoryIcon, ShoppingCart, Truck, ChevronDown, ChevronUp,
-  Trash2, Edit, Users, ScrollText, Search, FileText, PackagePlus, Printer
+  Trash2, Edit, Users, ScrollText, Search, FileText, PackagePlus, Printer, Mail, FileDown
 } from "lucide-react";
 import ContractEditModal from "../components/ContractEditModal";
+import ContractEmailModal from "../components/ContractEmailModal";
+import { generateContractColorPdf, buildContractEmailContent } from "../utils/contractPdf";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -276,6 +278,56 @@ export default function History() {
   const [editingDdt, setEditingDdt] = useState(null);
   const [editingContract, setEditingContract] = useState(null);
   const [printingDoc, setPrintingDoc] = useState(null); // { kind: "ddt" | "purchase" | "sale", data }
+  const [contractEmailModal, setContractEmailModal] = useState(null);
+
+  const handleDownloadContractPdf = async (contract) => {
+    try {
+      const pdfRes = await generateContractColorPdf(contract);
+      pdfRes.doc.save(pdfRes.fileName);
+      toast.success(`PDF a colori "${pdfRes.fileName}" scaricato!`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Errore durante la generazione del PDF");
+    }
+  };
+
+  const handleSendContractPdfEmail = async (contract) => {
+    try {
+      const pdfRes = await generateContractColorPdf(contract);
+      const emailContent = buildContractEmailContent(contract, pdfRes.fileName);
+      pdfRes.doc.save(pdfRes.fileName);
+
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+      const canShareFile = typeof navigator !== "undefined" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [pdfRes.pdfFile] });
+
+      if (isMobile && canShareFile) {
+        try {
+          await navigator.share({
+            files: [pdfRes.pdfFile],
+            title: emailContent.subject,
+            text: emailContent.body,
+          });
+          toast.success("Contratto in PDF a colori pronto per l'invio!");
+          return;
+        } catch {
+          // fallback to modal
+        }
+      }
+
+      if (contract.customer_email && contract.customer_email.trim()) {
+        const mailtoUrl = `mailto:${encodeURIComponent(contract.customer_email.trim())}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
+        window.location.href = mailtoUrl;
+      }
+
+      setContractEmailModal({ pdfResult: pdfRes, emailContent });
+      toast.success("Contratto trasformato in PDF a colori!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Errore durante la creazione del PDF");
+    }
+  };
 
   // Contract search filters
   const [cSearch, setCSearch] = useState("");
@@ -795,9 +847,15 @@ export default function History() {
                 <div className="text-right">
                   <p className="font-bold">€{(Number(c.total) || 0).toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">Acc: €{(Number(c.deposit) || 0).toFixed(2)}</p>
-                  <div className="flex gap-1 mt-2 justify-end">
-                    <Button size="sm" variant="outline" onClick={() => setEditingContract(c)}><Edit className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDeleteContract(c)}><Trash2 className="w-3 h-3" /></Button>
+                  <div className="flex gap-1 mt-2 justify-end flex-wrap">
+                    <Button size="sm" variant="outline" onClick={() => handleDownloadContractPdf(c)} title="Scarica PDF a Colori">
+                      <FileDown className="w-3 h-3 mr-1" /> PDF
+                    </Button>
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleSendContractPdfEmail(c)} title="Invia in PDF a Colori via Email">
+                      <Mail className="w-3 h-3 mr-1" /> Invia PDF
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingContract(c)} title="Modifica"><Edit className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDeleteContract(c)} title="Elimina"><Trash2 className="w-3 h-3" /></Button>
                   </div>
                 </div>
               </div>
@@ -870,7 +928,13 @@ export default function History() {
                   <div className="text-right">
                     <p className="font-bold">€{(Number(item.total) || 0).toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">Acc: €{(Number(item.deposit) || 0).toFixed(2)}</p>
-                    <div className="flex gap-1 mt-2">
+                    <div className="flex gap-1 mt-2 flex-wrap justify-end">
+                      <Button size="sm" variant="outline" onClick={() => handleDownloadContractPdf(item)} title="Scarica PDF a Colori">
+                        <FileDown className="w-3 h-3 mr-1" /> PDF
+                      </Button>
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleSendContractPdfEmail(item)} title="Invia in PDF a Colori via Email">
+                        <Mail className="w-3 h-3 mr-1" /> Invia PDF
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => setEditingContract(item)}><Edit className="w-3 h-3" /></Button>
                       <Button size="sm" variant="destructive" onClick={() => handleDeleteContract(item)}><Trash2 className="w-3 h-3" /></Button>
                     </div>
@@ -928,6 +992,13 @@ export default function History() {
           contract={editingContract}
           onClose={() => setEditingContract(null)}
           onSave={() => { setEditingContract(null); loadData(); }}
+        />
+      )}
+      {contractEmailModal && (
+        <ContractEmailModal
+          pdfResult={contractEmailModal.pdfResult}
+          emailContent={contractEmailModal.emailContent}
+          onClose={() => setContractEmailModal(null)}
         />
       )}
     </div>

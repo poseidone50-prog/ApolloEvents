@@ -5,12 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Trash2, Check } from "lucide-react";
+import { X, Trash2, Check, Mail, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { generateContractColorPdf, buildContractEmailContent } from "../utils/contractPdf";
+import ContractEmailModal from "./ContractEmailModal";
 
 export default function ContractEditModal({ contract, onClose, onSave }) {
   const [form, setForm] = useState({ ...contract });
   const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [emailModalData, setEmailModalData] = useState(null);
 
   const set = (field, value) => setForm(p => ({ ...p, [field]: value }));
 
@@ -23,6 +27,67 @@ export default function ContractEditModal({ contract, onClose, onSave }) {
     onSave();
   };
 
+  const handleDownloadPdf = async () => {
+    try {
+      setSending(true);
+      const paidTotal = Array.isArray(form.deposits) ? form.deposits.reduce((acc, d) => acc + (Number(d.amount) || 0), 0) : 0;
+      const pdfRes = await generateContractColorPdf({ ...form, deposit: paidTotal });
+      pdfRes.doc.save(pdfRes.fileName);
+      toast.success(`PDF a colori "${pdfRes.fileName}" scaricato!`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Errore durante la generazione del PDF");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendPdfEmail = async () => {
+    try {
+      setSending(true);
+      const paidTotal = Array.isArray(form.deposits) ? form.deposits.reduce((acc, d) => acc + (Number(d.amount) || 0), 0) : 0;
+      const updatedPayload = { ...form, deposit: paidTotal };
+      await base44.entities.Contract.update(contract.id, updatedPayload);
+
+      const pdfRes = await generateContractColorPdf(updatedPayload);
+      const emailContent = buildContractEmailContent(updatedPayload, pdfRes.fileName);
+      pdfRes.doc.save(pdfRes.fileName);
+
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+      const canShareFile = typeof navigator !== "undefined" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [pdfRes.pdfFile] });
+
+      if (isMobile && canShareFile) {
+        try {
+          await navigator.share({
+            files: [pdfRes.pdfFile],
+            title: emailContent.subject,
+            text: emailContent.body,
+          });
+          toast.success("Contratto in PDF a colori pronto per l'invio!");
+          setSending(false);
+          return;
+        } catch {
+          // fallback to modal
+        }
+      }
+
+      if (form.customer_email && form.customer_email.trim()) {
+        const mailtoUrl = `mailto:${encodeURIComponent(form.customer_email.trim())}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
+        window.location.href = mailtoUrl;
+      }
+
+      setEmailModalData({ pdfResult: pdfRes, emailContent });
+      toast.success("Contratto trasformato in PDF a colori!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Errore durante la creazione del PDF");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 md:p-4">
       <div
@@ -31,7 +96,28 @@ export default function ContractEditModal({ contract, onClose, onSave }) {
       >
         <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between gap-2 z-10">
           <h2 className="font-bold text-base truncate">Modifica Contratto</h2>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownloadPdf}
+              disabled={sending}
+              className="rounded-xl font-bold"
+              title="Scarica PDF a Colori"
+            >
+              <FileDown className="w-4 h-4 mr-1" />
+              PDF
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSendPdfEmail}
+              disabled={sending}
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              title="Trasforma in PDF a Colori e Invia Email"
+            >
+              <Mail className="w-4 h-4 mr-1" />
+              Invia PDF
+            </Button>
             <Button
               size="sm"
               onClick={handleSave}
@@ -147,11 +233,24 @@ export default function ContractEditModal({ contract, onClose, onSave }) {
               <span className="text-primary font-black">€{Math.max(0, ((form.total || 0) - (form.discount || 0)) - (Array.isArray(form.deposits) ? form.deposits.reduce((acc, d) => acc + (d.amount || 0), 0) : 0)).toFixed(2)}</span>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving} className="w-full h-12 rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold">
-            {saving ? "Salvataggio..." : "Salva Modifiche"}
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={handleSave} disabled={saving} className="h-12 rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold">
+              {saving ? "Salvataggio..." : "Salva Modifiche"}
+            </Button>
+            <Button onClick={handleSendPdfEmail} disabled={sending} className="h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+              <Mail className="w-4 h-4 mr-1.5" /> {sending ? "..." : "Invia in PDF a Colori"}
+            </Button>
+          </div>
         </div>
       </div>
+
+      {emailModalData && (
+        <ContractEmailModal
+          pdfResult={emailModalData.pdfResult}
+          emailContent={emailModalData.emailContent}
+          onClose={() => setEmailModalData(null)}
+        />
+      )}
     </div>
   );
 }
