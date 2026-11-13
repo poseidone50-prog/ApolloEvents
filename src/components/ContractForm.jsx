@@ -226,12 +226,6 @@ export default function ContractForm() {
         }
       }
 
-      // 4. Se l'email del cliente è già presente, apri subito il client email precompilato + mostra la finestra di conferma con il PDF
-      if (customer.email && customer.email.trim()) {
-        const mailtoUrl = `mailto:${encodeURIComponent(customer.email.trim())}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
-        window.location.href = mailtoUrl;
-      }
-
       setEmailModalData({ pdfResult: pdfRes, emailContent });
       toast.success("Contratto trasformato in PDF a colori!");
     } catch (err) {
@@ -268,31 +262,40 @@ export default function ContractForm() {
         </div>
 
         <div
-          className="bg-white p-6 print:p-0 text-xs leading-snug text-slate-800 max-w-[21cm] mx-auto shadow-2xl rounded-sm print:shadow-none font-sans flex flex-col relative overflow-hidden"
-          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+          className="bg-white p-7 print:p-0 text-sm leading-relaxed text-slate-800 max-w-[21cm] mx-auto shadow-2xl rounded-sm print:shadow-none flex flex-col relative overflow-hidden"
+          style={{
+            fontFamily: "'Georgia', 'Times New Roman', Times, serif",
+            WebkitPrintColorAdjust: "exact",
+            printColorAdjust: "exact",
+          }}
         >
           <style>{"@media print { @page { margin: 0.8cm; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }"}</style>
 
           {/* Top Color Bar */}
-          <div className="flex h-1.5 -mx-6 -mt-6 mb-4 print:mx-0 print:mt-0">
-            <div className="w-1/3 bg-[#ec0e0e]" />
+          <div className="flex h-2 -mx-7 -mt-7 mb-4 print:mx-0 print:mt-0">
+            <div className="w-1/3 bg-[#b91c1c]" />
             <div className="w-2/3 bg-slate-900" />
           </div>
 
           {/* Header */}
-          <div className="flex justify-between items-center mb-3 border-b-2 border-slate-900 pb-2">
+          <div className="flex justify-between items-center mb-4 border-b-2 border-slate-900 pb-3">
             <div className="flex items-center gap-4">
-              <img src={LOGO} alt="Apollo Events" className="h-14 w-14 object-contain drop-shadow-sm" />
-              <div className="tracking-tight">
-                <h1 className="font-black text-2xl text-slate-900 uppercase">Apollo Events</h1>
-                <p className="text-[10px] font-bold text-[#ec0e0e] uppercase tracking-widest">Fireworks · Spettacoli &amp; Eventi</p>
+              <img src={LOGO} alt="Apollo Events" className="h-16 w-16 object-contain drop-shadow-sm" />
+              <div>
+                <h1 className="font-bold text-3xl text-slate-900 tracking-wide">Apollo Events</h1>
+                <p className="text-sm font-semibold italic text-[#b91c1c] mt-0.5">
+                  Spettacoli Pirotecnici · Eventi · Allestimenti
+                </p>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Progettazione e Realizzazione Spettacoli Pirotecnici ed Eventi Esclusivi
+                </p>
               </div>
             </div>
             <div className="text-right">
-              <h2 className="font-black text-xl text-slate-900 tracking-wider">CONTRATTO</h2>
-              <div className="text-xs text-slate-600 bg-slate-100 p-1.5 px-2.5 rounded border border-slate-300 inline-block text-left mt-1">
-                <p><span className="font-semibold text-slate-500 uppercase text-[10px] w-12 inline-block">Rif. N°:</span> <span className="font-bold text-slate-900">{contractNumber || "—"}</span></p>
-                <p><span className="font-semibold text-slate-500 uppercase text-[10px] w-12 inline-block">Data:</span> <span className="font-bold text-slate-900">{contractDate ? safeFormatDate(contractDate) : "—"}</span></p>
+              <h2 className="font-bold text-lg text-slate-900 uppercase tracking-wider">Contratto d&apos;Evento</h2>
+              <div className="text-xs text-slate-700 bg-slate-50 p-2 px-3 rounded-md border border-slate-300 inline-block text-left mt-1.5">
+                <p><span className="font-semibold text-slate-500 inline-block w-24">Contratto N°:</span> <span className="font-bold text-slate-900 text-sm">{contractNumber || "—"}</span></p>
+                <p className="mt-0.5"><span className="font-semibold text-slate-500 inline-block w-24">Data Stipula:</span> <span className="font-bold text-slate-900">{contractDate ? safeFormatDate(contractDate) : "—"}</span></p>
               </div>
             </div>
           </div>

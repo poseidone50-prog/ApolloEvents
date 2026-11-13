@@ -316,11 +316,6 @@ export default function History() {
         }
       }
 
-      if (contract.customer_email && contract.customer_email.trim()) {
-        const mailtoUrl = `mailto:${encodeURIComponent(contract.customer_email.trim())}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
-        window.location.href = mailtoUrl;
-      }
-
       setContractEmailModal({ pdfResult: pdfRes, emailContent });
       toast.success("Contratto trasformato in PDF a colori!");
     } catch (err) {

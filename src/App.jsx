@@ -16,6 +16,7 @@ import PurchaseInvoice from './pages/PurchaseInvoice';
 import Documents from './pages/Documents';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
+import PublicContractPdf from './pages/PublicContractPdf';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -61,6 +62,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/contratto-pdf" element={<PublicContractPdf />} />
             <Route path="*" element={<AuthenticatedApp />} />
           </Routes>
         </Router>

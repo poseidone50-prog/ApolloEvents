@@ -73,11 +73,6 @@ export default function ContractEditModal({ contract, onClose, onSave }) {
         }
       }
 
-      if (form.customer_email && form.customer_email.trim()) {
-        const mailtoUrl = `mailto:${encodeURIComponent(form.customer_email.trim())}?subject=${encodeURIComponent(emailContent.subject)}&body=${encodeURIComponent(emailContent.body)}`;
-        window.location.href = mailtoUrl;
-      }
-
       setEmailModalData({ pdfResult: pdfRes, emailContent });
       toast.success("Contratto trasformato in PDF a colori!");
     } catch (err) {
